@@ -30,7 +30,9 @@
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
-
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -50,10 +52,15 @@ public class LispLexers {
             tokens.fill();
 
             // Print the tokens
+            tokens.fill();  // Load all tokens
             for (Token token : tokens.getTokens()) {
-                String tokenName = LispLexer.VOCABULARY.getSymbolicName(token.getType());
-                System.out.println("Token Type: " + token.getType() + " " + tokenName + " " + token.getText());
+                System.out.println("Token Type: " + lexer.getVocabulary().getSymbolicName(token.getType()) +
+                                   ", Value: " + token.getText());
             }
+
+            LispParser parser = new LispParser(tokens);
+            ParseTree tree = parser.lisp_();
+            System.out.println(tree.toStringTree(parser));
 
             // Close the input stream
             inputStream.close();

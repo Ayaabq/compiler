@@ -22,6 +22,8 @@ FORMAT : 'format' ;
 SPECIAL_IDENTIFIER : '*' LETTER (LETTER | DIGIT | SPECIAL_CHAR)* '*' ;
 TERMINAL : 't' ;
 
+// Identifiers
+ID          : [a-zA-Z]+;                      
 
 TRUE : 'T';
 FALSE : 'nil' ;
