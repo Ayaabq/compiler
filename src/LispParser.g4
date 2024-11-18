@@ -10,8 +10,8 @@ expression  : function
             | variableDeclaration
             | conditional
             | loop
-            | call
-            | atom;
+            | call;
+            // | atom;
 
 // Rule for function definitions: (defun funcName (param1 param2 ...) body)
 function    : LPAREN DEFUN ID LPAREN ID* RPAREN expression RPAREN;
@@ -34,11 +34,11 @@ loop        : LPAREN DOTIMES LPAREN ID expression RPAREN expression RPAREN
 call        : LPAREN ID expression* RPAREN;
 
 // Atomic symbols: number, boolean constants, or identifiers
-atom        : NUMBER
-            | TRUE
-            | FALSE
-            | ID
-            | STRING;
+// atom        : NUMBER
+//             | TRUE
+//             | FALSE
+//             | ID
+//             | STRING;
 
 // Arithmetic and logical expressions
 arithmetic  : LPAREN (ADD | SUB | MUL | DIV) expression+ RPAREN;

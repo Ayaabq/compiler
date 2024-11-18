@@ -16,15 +16,15 @@
 ; (+ 5 (- 2 6)
 
 ; A simple Lisp program to test your compiler
+; Simple LISP code with different number types
+(define x 42)                ; INTEGER
+(define pi 3.14159)          ; REAL
+(define half 1/2)            ; RATIONAL
+(define z #c(1.0 2.0))       ; COMPLEX
 
-(define (factorial n)
-  (if (= n 0)
-      1
-      (* n (factorial (- n 1)))))
+; Printing the values
+(display x)                  ; Output: 42
+(display pi)                 ; Output: 3.14159
+(display half)               ; Output: 1/2
+(display z)                  ; Output: #c(1.0 2.0)
 
-(define (main)
-  (display "Factorial of 5 is: ")
-  (display (factorial 5))
-  (newline))
-
-(main)
