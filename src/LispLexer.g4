@@ -21,6 +21,24 @@ DOLIST : [dD][oO][lL][iI][sS][tT] ;
 PRINT : [pP][rR][iI][nN][tT] ;
 FORMAT : [fF][oO][rR][mM][aA][tT] ;
 
+// arithmetic functions 
+FLOOR     : [fF][lL][oO][oO][rR] ;         
+CEILING   : [cC][eE][iI][lL][iI][nN][gG] ;   
+MOD       : [mM][oO][dD] ;                   
+SIN       : [sS][iI][nN] ;                
+COS       : [cC][oO][sS] ;                  
+TAN       : [tT][aA][nN] ;                  
+SQRT      : [sS][qQ][rR][tT] ;                
+EXP       : [eE][xX][pP] ;                   // e* 
+EXPT      : [eE][xX][pP][tT] ;               // exponent with a base other than e 
+
+
+// Tokens for cons cell operations (cons CAR CDR) (cons 4 5)
+CONS     : [cC][oO][nN][sS] ;
+CAR      : [cC][aA][rR] ;
+CDR      : [cC][dD][rR] ;
+
+
 
 // Identifiers
 ID          : [a-zA-Z]+;                      

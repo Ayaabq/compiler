@@ -58,12 +58,6 @@ public interface LispParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCall(LispParser.CallContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link LispParser#atom}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAtom(LispParser.AtomContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link LispParser#arithmetic}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

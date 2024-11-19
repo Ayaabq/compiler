@@ -28,3 +28,5 @@
 (display half)               ; Output: 1/2
 (display z)                  ; Output: #c(1.0 2.0)
 
+(cons (cons 4 5) 6)
+(car (cons 4 5))
