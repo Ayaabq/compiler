@@ -8,10 +8,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library" exported="">
+    <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://D:/antlr_projects/antlr-intellij-plugin-v4/lib/antlr4-runtime-4.13.2.jar!/" />
+          <root url="jar://$USER_HOME$/Downloads/antlr-intellij-plugin-v4/lib/antlr4-runtime-4.13.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
