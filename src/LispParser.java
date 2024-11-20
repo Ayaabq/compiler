@@ -16,14 +16,21 @@ public class LispParser extends Parser {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		DEFVAR=1, SETQ=2, LET=3, LET_STAR=4, IF=5, COND=6, LAMBDA=7, FUNCALL=8, 
-		DEFUN=9, DOTIMES=10, DOLIST=11, PRINT=12, FORMAT=13, FLOOR=14, CEILING=15, 
-		MOD=16, SIN=17, COS=18, TAN=19, SQRT=20, EXP=21, EXPT=22, CONS=23, CAR=24, 
-		CDR=25, ID=26, T=27, NIL=28, KEYWORD=29, SPECIAL_IDENTIFIER=30, TERMINAL=31, 
-		ATOMIC_SYMBOL=32, STRING=33, INTEGER=34, REAL=35, RATIONAL=36, COMPLEX=37, 
-		LPAREN=38, RPAREN=39, WS=40, COMMENT=41, MULTI_LINE_COMMENT=42, ADD=43, 
-		SUB=44, MUL=45, DIV=46, AND=47, OR=48, NOT=49, EQUAL=50, NOTEQUAL=51, 
-		LT=52, GT=53, LE=54, GE=55;
+		DEFVAR=1, SETQ=2, LET=3, LET_STAR=4, IF=5, COND=6, T=7, NIL=8, LAMBDA=9, 
+		FUNCALL=10, DEFUN=11, DOTIMES=12, DOLIST=13, PRINT=14, FORMAT=15, OPTIONAL=16, 
+		REST=17, KEY=18, FLOOR=19, CEILING=20, MOD=21, SIN=22, COS=23, TAN=24, 
+		SQRT=25, EXP=26, EXPT=27, SETF=28, WHEN=29, UNLESS=30, CASE=31, OTHERWISE=32, 
+		PROGN=33, AND=34, OR=35, NOT=36, APPLY=37, MAPCAR=38, RETURN_FROM=39, 
+		BLOCK=40, RETURN=41, ERROR=42, LOOP=43, DO=44, DO_STAR=45, CONS=46, CAR=47, 
+		CDR=48, LIST=49, PUSH=50, POP=51, KEYWORD=52, TERMINAL=53, LPAREN=54, 
+		RPAREN=55, TILDE=56, DIRECTIVE_S=57, DIRECTIVE_D=58, DIRECTIVE_NEWLINE=59, 
+		DIRECTIVE_TILDE=60, SORT=61, STABLE_SORT=62, QUOTE=63, FUNCTION=64, MAKE_ARRAY=65, 
+		AREF=66, DEFSTRUCT=67, MAKE_STRUCT=68, FIELD_ACCESS=69, ADD=70, SUB=71, 
+		MUL=72, DIV=73, EQ=74, EQUAL=75, EQL=76, NUM_EQ=77, NOTEQUAL=78, LT=79, 
+		GT=80, LE=81, GE=82, INTEGER=83, REAL=84, RATIONAL=85, COMPLEX=86, WS=87, 
+		COMMENT=88, MULTI_LINE_COMMENT=89, ATOMIC_SYMBOL=90, STRING_START=91, 
+		ERROR_CHAR=92, STRING_CONTENT=93, ESCAPED_CHAR=94, STRING_ERROR_CHAR=95, 
+		STRING_END=96, DIRECTIVE_A=97, SPECIAL_IDENTIFIER=98, IDENTIFIER=99, ID=100;
 	public static final int
 		RULE_lisp_ = 0, RULE_expression = 1, RULE_function = 2, RULE_variableDeclaration = 3, 
 		RULE_conditional = 4, RULE_condClause = 5, RULE_loop = 6, RULE_call = 7, 
@@ -40,21 +47,31 @@ public class LispParser extends Parser {
 		return new String[] {
 			null, null, null, null, null, null, null, null, null, null, null, null, 
 			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, "'t'", null, null, null, null, 
-			null, null, "'('", "')'", null, null, null, "'+'", "'-'", "'*'", "'/'", 
-			"'and'", "'or'", "'not'", "'='", "'/='", "'<'", "'>'", "'<='", "'>='"
+			null, null, null, null, null, null, null, null, null, null, null, null, 
+			null, null, null, null, null, null, null, null, null, null, null, null, 
+			null, null, null, null, null, "'t'", "'('", "')'", "'~'", null, null, 
+			null, "'~~'", null, null, null, null, null, null, null, null, null, "'+'", 
+			"'-'", "'*'", "'/'", null, null, null, "'='", "'/='", "'<'", "'>'", "'<='", 
+			"'>='"
 		};
 	}
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
 	private static String[] makeSymbolicNames() {
 		return new String[] {
-			null, "DEFVAR", "SETQ", "LET", "LET_STAR", "IF", "COND", "LAMBDA", "FUNCALL", 
-			"DEFUN", "DOTIMES", "DOLIST", "PRINT", "FORMAT", "FLOOR", "CEILING", 
-			"MOD", "SIN", "COS", "TAN", "SQRT", "EXP", "EXPT", "CONS", "CAR", "CDR", 
-			"ID", "T", "NIL", "KEYWORD", "SPECIAL_IDENTIFIER", "TERMINAL", "ATOMIC_SYMBOL", 
-			"STRING", "INTEGER", "REAL", "RATIONAL", "COMPLEX", "LPAREN", "RPAREN", 
-			"WS", "COMMENT", "MULTI_LINE_COMMENT", "ADD", "SUB", "MUL", "DIV", "AND", 
-			"OR", "NOT", "EQUAL", "NOTEQUAL", "LT", "GT", "LE", "GE"
+			null, "DEFVAR", "SETQ", "LET", "LET_STAR", "IF", "COND", "T", "NIL", 
+			"LAMBDA", "FUNCALL", "DEFUN", "DOTIMES", "DOLIST", "PRINT", "FORMAT", 
+			"OPTIONAL", "REST", "KEY", "FLOOR", "CEILING", "MOD", "SIN", "COS", "TAN", 
+			"SQRT", "EXP", "EXPT", "SETF", "WHEN", "UNLESS", "CASE", "OTHERWISE", 
+			"PROGN", "AND", "OR", "NOT", "APPLY", "MAPCAR", "RETURN_FROM", "BLOCK", 
+			"RETURN", "ERROR", "LOOP", "DO", "DO_STAR", "CONS", "CAR", "CDR", "LIST", 
+			"PUSH", "POP", "KEYWORD", "TERMINAL", "LPAREN", "RPAREN", "TILDE", "DIRECTIVE_S", 
+			"DIRECTIVE_D", "DIRECTIVE_NEWLINE", "DIRECTIVE_TILDE", "SORT", "STABLE_SORT", 
+			"QUOTE", "FUNCTION", "MAKE_ARRAY", "AREF", "DEFSTRUCT", "MAKE_STRUCT", 
+			"FIELD_ACCESS", "ADD", "SUB", "MUL", "DIV", "EQ", "EQUAL", "EQL", "NUM_EQ", 
+			"NOTEQUAL", "LT", "GT", "LE", "GE", "INTEGER", "REAL", "RATIONAL", "COMPLEX", 
+			"WS", "COMMENT", "MULTI_LINE_COMMENT", "ATOMIC_SYMBOL", "STRING_START", 
+			"ERROR_CHAR", "STRING_CONTENT", "ESCAPED_CHAR", "STRING_ERROR_CHAR", 
+			"STRING_END", "DIRECTIVE_A", "SPECIAL_IDENTIFIER", "IDENTIFIER", "ID"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -803,7 +820,7 @@ public class LispParser extends Parser {
 			match(LPAREN);
 			setState(112);
 			_la = _input.LA(1);
-			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 131941395333120L) != 0)) ) {
+			if ( !(((((_la - 70)) & ~0x3f) == 0 && ((1L << (_la - 70)) & 15L) != 0)) ) {
 			_errHandler.recoverInline(this);
 			}
 			else {
@@ -883,7 +900,7 @@ public class LispParser extends Parser {
 			match(LPAREN);
 			setState(121);
 			_la = _input.LA(1);
-			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 985162418487296L) != 0)) ) {
+			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 120259084288L) != 0)) ) {
 			_errHandler.recoverInline(this);
 			}
 			else {
@@ -921,7 +938,7 @@ public class LispParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\u0004\u00017\u0082\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001\u0002"+
+		"\u0004\u0001d\u0082\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001\u0002"+
 		"\u0002\u0007\u0002\u0002\u0003\u0007\u0003\u0002\u0004\u0007\u0004\u0002"+
 		"\u0005\u0007\u0005\u0002\u0006\u0007\u0006\u0002\u0007\u0007\u0007\u0002"+
 		"\b\u0007\b\u0002\t\u0007\t\u0001\u0000\u0004\u0000\u0016\b\u0000\u000b"+
@@ -942,7 +959,7 @@ public class LispParser extends Parser {
 		"\u0001\u0007\u0001\b\u0001\b\u0001\b\u0004\bs\b\b\u000b\b\f\bt\u0001\b"+
 		"\u0001\b\u0001\t\u0001\t\u0001\t\u0004\t|\b\t\u000b\t\f\t}\u0001\t\u0001"+
 		"\t\u0001\t\u0000\u0000\n\u0000\u0002\u0004\u0006\b\n\f\u000e\u0010\u0012"+
-		"\u0000\u0003\u0001\u0000\u0001\u0002\u0001\u0000+.\u0001\u0000/1\u0084"+
+		"\u0000\u0003\u0001\u0000\u0001\u0002\u0001\u0000FI\u0001\u0000\"$\u0084"+
 		"\u0000\u0015\u0001\u0000\u0000\u0000\u0002 \u0001\u0000\u0000\u0000\u0004"+
 		"\"\u0001\u0000\u0000\u0000\u00060\u0001\u0000\u0000\u0000\bJ\u0001\u0000"+
 		"\u0000\u0000\nL\u0001\u0000\u0000\u0000\fc\u0001\u0000\u0000\u0000\u000e"+
@@ -956,43 +973,42 @@ public class LispParser extends Parser {
 		"\u000e\u0007\u0000 \u001b\u0001\u0000\u0000\u0000 \u001c\u0001\u0000\u0000"+
 		"\u0000 \u001d\u0001\u0000\u0000\u0000 \u001e\u0001\u0000\u0000\u0000 "+
 		"\u001f\u0001\u0000\u0000\u0000!\u0003\u0001\u0000\u0000\u0000\"#\u0005"+
-		"&\u0000\u0000#$\u0005\t\u0000\u0000$%\u0005\u001a\u0000\u0000%)\u0005"+
-		"&\u0000\u0000&(\u0005\u001a\u0000\u0000\'&\u0001\u0000\u0000\u0000(+\u0001"+
-		"\u0000\u0000\u0000)\'\u0001\u0000\u0000\u0000)*\u0001\u0000\u0000\u0000"+
-		"*,\u0001\u0000\u0000\u0000+)\u0001\u0000\u0000\u0000,-\u0005\'\u0000\u0000"+
-		"-.\u0003\u0002\u0001\u0000./\u0005\'\u0000\u0000/\u0005\u0001\u0000\u0000"+
-		"\u000001\u0005&\u0000\u000012\u0007\u0000\u0000\u000023\u0005\u001a\u0000"+
-		"\u000034\u0003\u0002\u0001\u000045\u0005\'\u0000\u00005\u0007\u0001\u0000"+
-		"\u0000\u000067\u0005&\u0000\u000078\u0005\u0005\u0000\u000089\u0003\u0002"+
-		"\u0001\u00009;\u0003\u0002\u0001\u0000:<\u0003\u0002\u0001\u0000;:\u0001"+
-		"\u0000\u0000\u0000;<\u0001\u0000\u0000\u0000<=\u0001\u0000\u0000\u0000"+
-		"=>\u0005\'\u0000\u0000>K\u0001\u0000\u0000\u0000?@\u0005&\u0000\u0000"+
-		"@A\u0005\u0006\u0000\u0000AC\u0005&\u0000\u0000BD\u0003\n\u0005\u0000"+
-		"CB\u0001\u0000\u0000\u0000DE\u0001\u0000\u0000\u0000EC\u0001\u0000\u0000"+
-		"\u0000EF\u0001\u0000\u0000\u0000FG\u0001\u0000\u0000\u0000GH\u0005\'\u0000"+
-		"\u0000HI\u0005\'\u0000\u0000IK\u0001\u0000\u0000\u0000J6\u0001\u0000\u0000"+
-		"\u0000J?\u0001\u0000\u0000\u0000K\t\u0001\u0000\u0000\u0000LM\u0005&\u0000"+
-		"\u0000MN\u0003\u0002\u0001\u0000NO\u0003\u0002\u0001\u0000OP\u0005\'\u0000"+
-		"\u0000P\u000b\u0001\u0000\u0000\u0000QR\u0005&\u0000\u0000RS\u0005\n\u0000"+
-		"\u0000ST\u0005&\u0000\u0000TU\u0005\u001a\u0000\u0000UV\u0003\u0002\u0001"+
-		"\u0000VW\u0005\'\u0000\u0000WX\u0003\u0002\u0001\u0000XY\u0005\'\u0000"+
-		"\u0000Yd\u0001\u0000\u0000\u0000Z[\u0005&\u0000\u0000[\\\u0005\u000b\u0000"+
-		"\u0000\\]\u0005&\u0000\u0000]^\u0005\u001a\u0000\u0000^_\u0003\u0002\u0001"+
-		"\u0000_`\u0005\'\u0000\u0000`a\u0003\u0002\u0001\u0000ab\u0005\'\u0000"+
-		"\u0000bd\u0001\u0000\u0000\u0000cQ\u0001\u0000\u0000\u0000cZ\u0001\u0000"+
-		"\u0000\u0000d\r\u0001\u0000\u0000\u0000ef\u0005&\u0000\u0000fj\u0005\u001a"+
-		"\u0000\u0000gi\u0003\u0002\u0001\u0000hg\u0001\u0000\u0000\u0000il\u0001"+
-		"\u0000\u0000\u0000jh\u0001\u0000\u0000\u0000jk\u0001\u0000\u0000\u0000"+
-		"km\u0001\u0000\u0000\u0000lj\u0001\u0000\u0000\u0000mn\u0005\'\u0000\u0000"+
-		"n\u000f\u0001\u0000\u0000\u0000op\u0005&\u0000\u0000pr\u0007\u0001\u0000"+
-		"\u0000qs\u0003\u0002\u0001\u0000rq\u0001\u0000\u0000\u0000st\u0001\u0000"+
-		"\u0000\u0000tr\u0001\u0000\u0000\u0000tu\u0001\u0000\u0000\u0000uv\u0001"+
-		"\u0000\u0000\u0000vw\u0005\'\u0000\u0000w\u0011\u0001\u0000\u0000\u0000"+
-		"xy\u0005&\u0000\u0000y{\u0007\u0002\u0000\u0000z|\u0003\u0002\u0001\u0000"+
-		"{z\u0001\u0000\u0000\u0000|}\u0001\u0000\u0000\u0000}{\u0001\u0000\u0000"+
-		"\u0000}~\u0001\u0000\u0000\u0000~\u007f\u0001\u0000\u0000\u0000\u007f"+
-		"\u0080\u0005\'\u0000\u0000\u0080\u0013\u0001\u0000\u0000\u0000\n\u0017"+
-		" );EJcjt}";
+		"6\u0000\u0000#$\u0005\u000b\u0000\u0000$%\u0005d\u0000\u0000%)\u00056"+
+		"\u0000\u0000&(\u0005d\u0000\u0000\'&\u0001\u0000\u0000\u0000(+\u0001\u0000"+
+		"\u0000\u0000)\'\u0001\u0000\u0000\u0000)*\u0001\u0000\u0000\u0000*,\u0001"+
+		"\u0000\u0000\u0000+)\u0001\u0000\u0000\u0000,-\u00057\u0000\u0000-.\u0003"+
+		"\u0002\u0001\u0000./\u00057\u0000\u0000/\u0005\u0001\u0000\u0000\u0000"+
+		"01\u00056\u0000\u000012\u0007\u0000\u0000\u000023\u0005d\u0000\u00003"+
+		"4\u0003\u0002\u0001\u000045\u00057\u0000\u00005\u0007\u0001\u0000\u0000"+
+		"\u000067\u00056\u0000\u000078\u0005\u0005\u0000\u000089\u0003\u0002\u0001"+
+		"\u00009;\u0003\u0002\u0001\u0000:<\u0003\u0002\u0001\u0000;:\u0001\u0000"+
+		"\u0000\u0000;<\u0001\u0000\u0000\u0000<=\u0001\u0000\u0000\u0000=>\u0005"+
+		"7\u0000\u0000>K\u0001\u0000\u0000\u0000?@\u00056\u0000\u0000@A\u0005\u0006"+
+		"\u0000\u0000AC\u00056\u0000\u0000BD\u0003\n\u0005\u0000CB\u0001\u0000"+
+		"\u0000\u0000DE\u0001\u0000\u0000\u0000EC\u0001\u0000\u0000\u0000EF\u0001"+
+		"\u0000\u0000\u0000FG\u0001\u0000\u0000\u0000GH\u00057\u0000\u0000HI\u0005"+
+		"7\u0000\u0000IK\u0001\u0000\u0000\u0000J6\u0001\u0000\u0000\u0000J?\u0001"+
+		"\u0000\u0000\u0000K\t\u0001\u0000\u0000\u0000LM\u00056\u0000\u0000MN\u0003"+
+		"\u0002\u0001\u0000NO\u0003\u0002\u0001\u0000OP\u00057\u0000\u0000P\u000b"+
+		"\u0001\u0000\u0000\u0000QR\u00056\u0000\u0000RS\u0005\f\u0000\u0000ST"+
+		"\u00056\u0000\u0000TU\u0005d\u0000\u0000UV\u0003\u0002\u0001\u0000VW\u0005"+
+		"7\u0000\u0000WX\u0003\u0002\u0001\u0000XY\u00057\u0000\u0000Yd\u0001\u0000"+
+		"\u0000\u0000Z[\u00056\u0000\u0000[\\\u0005\r\u0000\u0000\\]\u00056\u0000"+
+		"\u0000]^\u0005d\u0000\u0000^_\u0003\u0002\u0001\u0000_`\u00057\u0000\u0000"+
+		"`a\u0003\u0002\u0001\u0000ab\u00057\u0000\u0000bd\u0001\u0000\u0000\u0000"+
+		"cQ\u0001\u0000\u0000\u0000cZ\u0001\u0000\u0000\u0000d\r\u0001\u0000\u0000"+
+		"\u0000ef\u00056\u0000\u0000fj\u0005d\u0000\u0000gi\u0003\u0002\u0001\u0000"+
+		"hg\u0001\u0000\u0000\u0000il\u0001\u0000\u0000\u0000jh\u0001\u0000\u0000"+
+		"\u0000jk\u0001\u0000\u0000\u0000km\u0001\u0000\u0000\u0000lj\u0001\u0000"+
+		"\u0000\u0000mn\u00057\u0000\u0000n\u000f\u0001\u0000\u0000\u0000op\u0005"+
+		"6\u0000\u0000pr\u0007\u0001\u0000\u0000qs\u0003\u0002\u0001\u0000rq\u0001"+
+		"\u0000\u0000\u0000st\u0001\u0000\u0000\u0000tr\u0001\u0000\u0000\u0000"+
+		"tu\u0001\u0000\u0000\u0000uv\u0001\u0000\u0000\u0000vw\u00057\u0000\u0000"+
+		"w\u0011\u0001\u0000\u0000\u0000xy\u00056\u0000\u0000y{\u0007\u0002\u0000"+
+		"\u0000z|\u0003\u0002\u0001\u0000{z\u0001\u0000\u0000\u0000|}\u0001\u0000"+
+		"\u0000\u0000}{\u0001\u0000\u0000\u0000}~\u0001\u0000\u0000\u0000~\u007f"+
+		"\u0001\u0000\u0000\u0000\u007f\u0080\u00057\u0000\u0000\u0080\u0013\u0001"+
+		"\u0000\u0000\u0000\n\u0017 );EJcjt}";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {
