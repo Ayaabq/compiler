@@ -1,32 +1,71 @@
-#||(defvar *greeting* "Hello") ; Global variable
+;; This is a comment in Lisp
+;; The following code demonstrates basic symbols, strings, and operations.
 
-(defun greet ()
-  (let ((name "Alice")) ; Local variable
-    (format t "~a, ~a!~%" *greeting* name))) ; Outputs "Hello, Alice!"
+;; Demonstration of strings with escape characters and special symbols
 
-(defun custom-greet (new-greeting)
-  (let* ((old-greeting *greeting*)
-         (*greeting* new-greeting)) ; Temporarily change the global var in this scope
-    (greet) ; Uses the modified value of *greeting*
-    (setq *greeting* old-greeting))) ; Restore original value
+(defparameter *escaped-string*
+  "This is a string with a newline:
+And a tab:	(Done!) the  newline:
+and a tab")
 
-(greet) ; Prints "Hello, Alice!"
-(custom-greet "Hi") ; Prints "Hi, Alice!", then reverts *greeting* back
-||#
-; (+ 5 (- 2 6)
+(defparameter *quote-in-string* "He said, \"Lisp is amazing!\"")
+(defparameter *backslash-string* "This path contains a backslash: C:\\Users\\Lisp")
 
-; A simple Lisp program to test your compiler
-; Simple LISP code with different number types
-(define x 42)                ; INTEGER
-(define pi 3.14159)          ; REAL
-(define half 1/2)            ; RATIONAL
-(define z #c(1.0 2.0))       ; COMPLEX
 
-; Printing the values
-(display x)                  ; Output: 42
-(display pi)                 ; Output: 3.14159
-(display half)               ; Output: 1/2
-(display z)                  ; Output: #c(1.0 2.0)
+;; Displaying strings with special content
+(defun display-special-strings ()
+  "Displays various strings with escape characters and special content."
+  (format t "~%Escaped String: ~a~%" *escaped-string*)
+  (format t "Quote in String: ~a~%" *quote-in-string*)
+  (format t "Backslash String: ~a~%" *backslash-string*)
+)
 
-(cons (cons 4 5) 6)
-(car (cons 4 5))
+;; Testing
+(display-special-strings)
+
+;; Original examples with other features retained
+(defun greet (name)
+  "Greets the user with a customized message."
+  (format t "~a ~a!~%" *escaped-string* name))
+
+(defun check-eligibility (age citizenship)
+  "Checks if a person is eligible based on age and citizenship."
+  (if (and (>= age 18) (equal citizenship "Yes"))
+      (format t "You are eligible.~%")
+      (format t "You are not eligible.~%")))
+
+(defparameter add (lambda (x y) (+ x y))) ; Global lambda for addition
+(defparameter multiply (lambda (x y) (* x y))) ; Global lambda for multiplication
+
+(defun apply-lambda (func x y)
+  "Applies a lambda function to two arguments."
+  (funcall func x y))
+
+(defun factorial (n)
+  "Calculates the factorial of a number recursively."
+  (if (<= n 1)
+      1
+      (* n (factorial (- n 1)))))
+
+(greet "Student")
+(check-eligibility 20 "Yes")
+(check-eligibility 16 "No")
+(format t "Add: ~a~%" (apply-lambda add 5 3))
+(format t "Multiply: ~a~%" (apply-lambda multiply 5 3))
+(format t "Factorial of 5: ~a~%" (factorial 5))
+
+
+
+;; Display strings
+(defun display-special-strings ()
+  "Displays strings with various escape characters."
+  (format t "~%Escaped String: ~a~%" *escaped-string*)
+  (format t "Quote in String: ~a~%" *quote-in-string*)
+  (format t "Backslash String: ~a~%" *backslash-string*))
+
+;; Test string display
+(display-special-strings)
+
+;; End of file
+(sort '(2 1 5 4 6) #'<)
+

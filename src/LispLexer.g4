@@ -6,6 +6,7 @@ SETQ : [sS][eE][tT][qQ] ;
 LET : [lL][eE][tT] ;
 LET_STAR : [lL][eE][tT][*] ;
 
+
 // Conditionals
 IF : [iI][fF] ;
 COND : [cC][oO][nN][dD] ;
@@ -21,16 +22,16 @@ DOLIST : [dD][oO][lL][iI][sS][tT] ;
 PRINT : [pP][rR][iI][nN][tT] ;
 FORMAT : [fF][oO][rR][mM][aA][tT] ;
 
-// arithmetic functions 
-FLOOR     : [fF][lL][oO][oO][rR] ;         
-CEILING   : [cC][eE][iI][lL][iI][nN][gG] ;   
-MOD       : [mM][oO][dD] ;                   
-SIN       : [sS][iI][nN] ;                
-COS       : [cC][oO][sS] ;                  
-TAN       : [tT][aA][nN] ;                  
-SQRT      : [sS][qQ][rR][tT] ;                
-EXP       : [eE][xX][pP] ;                   // e* 
-EXPT      : [eE][xX][pP][tT] ;               // exponent with a base other than e 
+// arithmetic functions
+FLOOR     : [fF][lL][oO][oO][rR] ;
+CEILING   : [cC][eE][iI][lL][iI][nN][gG] ;
+MOD       : [mM][oO][dD] ;
+SIN       : [sS][iI][nN] ;
+COS       : [cC][oO][sS] ;
+TAN       : [tT][aA][nN] ;
+SQRT      : [sS][qQ][rR][tT] ;
+EXP       : [eE][xX][pP] ;                   // e*
+EXPT      : [eE][xX][pP][tT] ;               // exponent with a base other than e
 
 
 // Tokens for cons cell operations (cons CAR CDR) (cons 4 5)
@@ -41,8 +42,6 @@ CDR      : [cC][dD][rR] ;
 
 
 // Identifiers
-ID          : [a-zA-Z]+;                      
-
 T           : [Tt];
 NIL         : [Nn][Ii][Ll];
 
@@ -59,11 +58,16 @@ ATOMIC_SYMBOL : LETTER ATOM_PART? ;
 fragment ATOM_PART : (LETTER | DIGIT | SPECIAL_CHAR)* ;
 fragment LETTER : [a-zA-Z] ;
 fragment DIGIT : [0-9] ;
-fragment SPECIAL_CHAR : [-_?!+*/<>] ;
+fragment SPECIAL_CHAR : [-_?!+*/<>:] ;
 
 // String
-STRING : '"' (ESCAPED_CHAR | ~["\\])* '"' ;
-fragment ESCAPED_CHAR : '\\' . ;
+
+STRING: '"' (ESCAPED_CHAR | ~["\\])* ('\\' [\r\n])* '"';
+
+fragment ESCAPED_CHAR : '\\' [btnfr"\\];
+
+
+
 
 // Numbers
 // NUMBER : INTEGER | REAL | RATIONAL | COMPLEX ;
@@ -93,9 +97,23 @@ OR : 'or' ;
 NOT : 'not' ;
 
 // Comparison Operators
-EQUAL : '=' ;
 NOTEQUAL : '/=' ;
 LT : '<' ;
 GT : '>' ;
 LE : '<=' ;
 GE : '>=' ;
+ID : [a-zA-Z]+;
+
+//EqUALITY
+QUOTE : '\'' ; // Single quote for quoted symbols
+EQ : [eE][qQ] ;          // eq function
+EQUAL : [eE][qQ][uU][aA][lL] ; // equal function
+EQL : [eE][qQ][lL] ;     // eql function
+NUM_EQ : '=' ;           // numerical equality
+
+// Sort
+SORT: 'sort';
+STABLE_SORT: 'stable-sort';
+SHARP: '#';
+
+
