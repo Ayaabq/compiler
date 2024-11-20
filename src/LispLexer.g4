@@ -69,6 +69,7 @@ fragment ESCAPED_CHAR : '\\' [btnfr"\\];
 
 
 
+
 // Numbers
 // NUMBER : INTEGER | REAL | RATIONAL | COMPLEX ;
 INTEGER: [+-]? [0-9]+; //An integer is a string of digits that can optionally start with a + or - sign
@@ -105,7 +106,6 @@ GE : '>=' ;
 ID : [a-zA-Z]+;
 
 //EqUALITY
-QUOTE : '\'' ; // Single quote for quoted symbols
 EQ : [eE][qQ] ;          // eq function
 EQUAL : [eE][qQ][uU][aA][lL] ; // equal function
 EQL : [eE][qQ][lL] ;     // eql function
@@ -114,6 +114,21 @@ NUM_EQ : '=' ;           // numerical equality
 // Sort
 SORT: 'sort';
 STABLE_SORT: 'stable-sort';
-SHARP: '#';
 
+// Keywords for special forms
+QUOTE : '\'' | [qQ][uU][oO][tT][eE] ; // ' or quote
+FUNCTION : '#' | [fF][uU][nN][cC][tT][iI][oO][nN] ; // # or function
+
+// Special variables (dynamically scoped)
+SPECIAL_VARIABLE : '*' LETTER (LETTER | DIGIT | SPECIAL_CHAR)* '*';
+
+// Keywords for Array Manipulation
+MAKE_ARRAY : [mM][aA][kK][eE][-][aA][rR][rR][aA][yY] ;
+AREF : [aA][rR][eE][fF] ;
+
+
+// Keywords for Structure Manipulation
+DEFSTRUCT : [dD][eE][fF][sS][tT][rR][uU][cC][tT] ;
+MAKE_STRUCT : [mM][aA][kK][eE][-] [a-zA-Z]+ ; // Matches make-<struct_name>
+FIELD_ACCESS : [a-zA-Z]+ '-' [a-zA-Z]+ ; // Matches <struct_name>-<field_name>
 
