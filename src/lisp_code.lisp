@@ -68,4 +68,9 @@ and a tab")
 
 ;; End of file
 (sort '(2 1 5 4 6) #'<)
+(eq 'a 'a)
+309.004e-14
+"Hello Lisp" 123 @ "中文字符"
+"Last\nex\\tample"
+
 
