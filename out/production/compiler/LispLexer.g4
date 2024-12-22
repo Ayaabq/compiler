@@ -20,6 +20,9 @@ DOTIMES : [dD][oO][tT][iI][mM][eE][sS] ;
 DOLIST : [dD][oO][lL][iI][sS][tT] ;
 PRINT : [pP][rR][iI][nN][tT] ;
 FORMAT : [fF][oO][rR][mM][aA][tT] ;
+OPTIONAL : [&][oO][pP][tT][iI][oO][nN][aA][lL] ;
+REST     : [&][rR][eE][sS][tT] ;
+KEY      : [&][kK][eE][yY] ;   // (defun foo (&key (x 5)) x)
 
 // Arithmetic functions
 FLOOR : [fF][lL][oO][oO][rR] ;
@@ -37,6 +40,34 @@ CONS : [cC][oO][nN][sS] ;
 CAR : [cC][aA][rR] ;
 CDR : [cC][dD][rR] ;
 
+SETF : [sS][eE][tT][fF] ;
+WHEN : [wW][hH][eE][nN];
+UNLESS : [uU][nN][lL][eE][sS][sS];
+CASE : [cC][aA][sS][eE];
+OTHERWISE : [oO][tT][hH][eE][rR][wW][iI][sS][eE];
+PROGN : [pP][rR][oO][gG][nN];
+
+///
+AND : [aA][nN][dD] ;
+OR : [oO][rR];
+NOT : [nN][oO][tT] ;
+APPLY : [aA][pP][pP][lL][yY] ;
+MAPCAR : [mM][aA][pP][cC][aA][rR] ;
+
+///
+RETURN_FROM : [rR][eE][tT][uU][rR][nN][-][fF][rR][oO][mM] ;
+BLOCK : [bB][lL][oO][cC][kK] ;
+RETURN : [rR][eE][tT][uU][rR][nN] ;
+ERROR : [eE][rR][rR][oO][rR] ;
+LOOP : [lL][oO][oO][pP] ;
+DO : [dD][oO] ;
+DO_STAR : [dD][oO][*] ;
+
+// Tokens for list operations
+LIST     : [lL][iI][sS][tT] ;
+PUSH     : [pP][uU][sS][hH] ; //(push 4 a)
+POP      : [pP][oO][pP] ;
+
 // Identifiers
 T : [Tt] ;
 NIL : [Nn][Ii][Ll] ;
@@ -44,6 +75,15 @@ NIL : [Nn][Ii][Ll] ;
 KEYWORD : ':' [a-zA-Z][a-zA-Z0-9-]* ;
 SPECIAL_IDENTIFIER : '*' LETTER (LETTER | DIGIT | SPECIAL_CHAR)* '*' ;
 TERMINAL : 't' ;
+
+// Tokens for format-related keywords and symbols
+TILDE     : '~' ;                        // Tilde character
+DIRECTIVE_S : '~' [sS] ;                // ~S directive e for any Lisp object.
+DIRECTIVE_D : '~' [dD] ;                // ~D directive for integers.
+DIRECTIVE_NEWLINE : '~' '%' ;            // ~% directive for newlines.
+DIRECTIVE_TILDE : '~~' ;                 // ~~ directive to output a single tilde.
+// DIRECTIVE_A : '~' [aA] ;                // ~a directive for pretty printing
+
 
 // Atoms and Identifiers
 fragment ATOM_PART : (LETTER | DIGIT | SPECIAL_CHAR)* ;
@@ -71,9 +111,8 @@ ADD : '+' ;
 SUB : '-' ;
 MUL : '*' ;
 DIV : '/' ;
-AND : 'and' ;
-OR : 'or' ;
-NOT : 'not' ;
+//concatenate
+CONCATENATE: [Cc][Oo][Nn][Cc][Aa][Tt][Ee][Nn][Aa][Tt][Ee];
 
 // Comparison Operators
 NOTEQUAL : '/=' ;
@@ -108,11 +147,12 @@ DEFSTRUCT : [dD][eE][fF][sS][tT][rR][uU][cC][tT] ;
 MAKE_STRUCT : [mM][aA][kK][eE][-] [a-zA-Z]+ ;
 FIELD_ACCESS : [a-zA-Z]+ '-' [a-zA-Z]+ ;
 
+DEFPARAMETER : [dD][eE][fF][Pp][Aa][Rr][Aa][Mm][eE][Tt][Ee][Rr];
 
 // ATOMIC_SYMBOL
 ATOMIC_SYMBOL : LETTER ATOM_PART? ;
 
-//FORMATE_EXPRISSION : FORMAT LPAREN T '"'->pushMode(FORMATE_EXPRISSION) ;
+//FORMATE_EXPRISSION : LPAREN FORMAT  T '"'.*'"' RPAREN SPECIAL_IDENTIFIER->pushMode(FORMATE_STRING_MODE) ;
 // String
 STRING_START : '"' -> pushMode(STRING_MODE) ;
 ERROR_CHAR : . ;
@@ -124,9 +164,10 @@ STRING_CONTENT : ~["\\]* ('\\' [\r\n])* ;
 ESCAPED_CHAR   : '\\' [btnfr"\\] ;
 STRING_ERROR_CHAR : ~'"' ;
 STRING_END     : '"' -> popMode ;
+
 //mode FORMATE_STRING_MODE;
-//FORMATE_STRING_CONTENT : ~["\\]* ('\\' [\r\n])* ;
-//FORMATE_ESCAPED_CHAR   : '\\' [btnfr"\\] ;
+//FORMATE_STRING_CONTENT : ~["\\]*  ;
+//FORMATE_ESCAPED_CHAR   : ['\\']*[~%]*[~a]* ;
 //FORMATE_STRING_ERROR_CHAR : ~'"' ;
 //FORMATE_STRING_END     : '"' -> popMode ;
 // String

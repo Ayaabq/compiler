@@ -73,4 +73,8 @@ and a tab")
 "Hello Lisp" 123 @ "中文字符"
 "Last\nex\\tample"
 
+"adsf\nkfldsf\t"
+"rer~%"
+concatenate (;sg')
+
 
