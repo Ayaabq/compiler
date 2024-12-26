@@ -1,39 +1,12 @@
-//import org.antlr.v4.runtime.CharStreams;
-//import org.antlr.v4.runtime.CommonTokenStream;
-//import org.antlr.v4.runtime.Token;
-//
-//import java.util.Scanner;
-//public class LispLexers {
-//    public static void main(String[] args) {
-//        Scanner scanner = new Scanner(System.in);
-//
-//        System.out.println("Enter input:");
-//        String input = scanner.nextLine();
-//
-//        // Create a lexer instance using the input
-//        LispLexer lexer = new LispLexer(CharStreams.fromString(input));
-//
-//        // Tokenize the input
-//        CommonTokenStream tokens = new CommonTokenStream(lexer);
-//        tokens.fill();
-//
-//        // Print the tokens
-//        for (Token token : tokens.getTokens()) {
-//            String tokenName = LispLexer.VOCABULARY.getSymbolicName(token.getType());
-//            System.out.println("Token Type: " + token.getType() +" "+ tokenName +" " + token.getText());
-//        }
-//
-//        scanner.close();
-//    }
-//}
-
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.Trees;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 public class LispLexers {
     public static void main(String[] args) {
@@ -47,13 +20,21 @@ public class LispLexers {
 
             // Tokenize the input
             CommonTokenStream tokens = new CommonTokenStream(lexer);
-            tokens.fill();
 
-            // Print the tokens
-            for (Token token : tokens.getTokens()) {
-                String tokenName = LispLexer.VOCABULARY.getSymbolicName(token.getType());
-                System.out.println("Token Type: " + token.getType() + " " + tokenName + " " + token.getText());
+            // Create the parser instance
+            LispParser parser = new LispParser(tokens);
+
+            // Parse the input and generate the parse tree
+            ParseTree tree = parser.program();
+
+            // Save the parse tree as text to a file
+            File outputFile = new File("src/lisp_parse_tree.txt");
+            try (PrintWriter writer = new PrintWriter(outputFile)) {
+                writer.println("Parse Tree:");
+                writer.println(Trees.toStringTree(tree, parser));
             }
+
+            System.out.println("Parse tree has been saved to: " + outputFile.getAbsolutePath());
 
             // Close the input stream
             inputStream.close();

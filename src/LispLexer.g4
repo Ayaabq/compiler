@@ -10,7 +10,7 @@ LET_STAR : [lL][eE][tT][*] ;
 IF : [iI][fF] ;
 COND : [cC][oO][nN][dD] ;
 
-// lambda functions
+// Lambda functions
 LAMBDA : [lL][aA][mM][bB][dD][aA] ;
 FUNCALL : [fF][uU][nN][cC][aA][lL] ;
 
@@ -20,7 +20,7 @@ DOTIMES : [dD][oO][tT][iI][mM][eE][sS] ;
 DOLIST : [dD][oO][lL][iI][sS][tT] ;
 PRINT : [pP][rR][iI][nN][tT] ;
 FORMAT : [fF][oO][rR][mM][aA][tT] ;
-FORMAT_T : [tT] -> pushMode(FORMAT_MODE)  ;
+FORMAT_T : [tT] -> pushMode(FORMAT_MODE) ;
 FORMAT_NIL : [nN][iI][lL]  -> pushMode(FORMAT_MODE) ;
 
 OPTIONAL : [&][oO][pP][tT][iI][oO][nN][aA][lL] ;
@@ -38,7 +38,7 @@ SQRT : [sS][qQ][rR][tT] ;
 EXP : [eE][xX][pP] ;
 EXPT : [eE][xX][pP][tT] ;
 
-//  cons cell operations
+// Cons cell operations
 CONS : [cC][oO][nN][sS] ;
 CAR : [cC][aA][rR] ;
 CDR : [cC][dD][rR] ;
@@ -50,14 +50,14 @@ CASE : [cC][aA][sS][eE];
 OTHERWISE : [oO][tT][hH][eE][rR][wW][iI][sS][eE];
 PROGN : [pP][rR][oO][gG][nN];
 
-///
+// Logical operations
 AND : [aA][nN][dD] ;
 OR : [oO][rR];
 NOT : [nN][oO][tT] ;
 APPLY : [aA][pP][pP][lL][yY] ;
 MAPCAR : [mM][aA][pP][cC][aA][rR] ;
 
-///
+// Control flow
 RETURN_FROM : [rR][eE][tT][uU][rR][nN][-][fF][rR][oO][mM] ;
 BLOCK : [bB][lL][oO][cC][kK] ;
 RETURN : [rR][eE][tT][uU][rR][nN] ;
@@ -66,19 +66,19 @@ LOOP : [lL][oO][oO][pP] ;
 DO : [dD][oO] ;
 DO_STAR : [dD][oO][*] ;
 
-// Tokens for list operations
+// List operations
 LIST     : [lL][iI][sS][tT] ;
 PUSH     : [pP][uU][sS][hH] ; //(push 4 a)
 POP      : [pP][oO][pP] ;
 
-
+// Keywords for special forms
 KEYWORD : ':' [a-zA-Z][a-zA-Z0-9-]* ;
 SPECIAL_IDENTIFIER : '*' LETTER (LETTER | DIGIT | SPECIAL_CHAR)* '*' ;
 TERMINAL : 't' ;
 
-
 // Atoms and Identifiers
-fragment ATOM_PART : (LETTER | DIGIT | SPECIAL_CHAR)* ;
+IDENTIFIER : LETTER (ATOM_PART)* ;
+fragment ATOM_PART : (LETTER | DIGIT | SPECIAL_CHAR)+ ;
 fragment LETTER : [a-zA-Z] ;
 fragment DIGIT : [0-9] ;
 fragment SPECIAL_CHAR : [-_?!+*/<>:] ;
@@ -91,7 +91,7 @@ RPAREN : ')' ;
 INTEGER : [+-]? [0-9]+ ;
 REAL : [+-]? [0-9]+ '.' [0-9]+ ([eE] [+-]? [0-9]+)? ;
 RATIONAL : INTEGER '/' INTEGER ;
-COMPLEX : '#'[cC] '(' REAL ' ' REAL ')' ;
+COMPLEX : '#' [cC] '(' REAL ' ' REAL ')' ;
 
 // Whitespace and Comments
 WS : [ \t\r\n]+ -> skip ;
@@ -103,7 +103,7 @@ ADD : '+' ;
 SUB : '-' ;
 MUL : '*' ;
 DIV : '/' ;
-//concatenate
+// Concatenate
 CONCATENATE: [Cc][Oo][Nn][Cc][Aa][Tt][Ee][Nn][Aa][Tt][Ee];
 
 // Comparison Operators
@@ -123,13 +123,6 @@ NUM_EQ : '=' ;
 SORT : [Ss][Oo][Rr][Tt] ;
 STABLE_SORT : [Ss][Tt][Aa][Bb][Ll][eE]'-'[Ss][oO][rR][tT] ;
 
-// Keywords for special forms
-QUOTE : '\'' | [qQ][uU][oO][tT][eE] ;
-FUNCTION : '#' | [fF][uU][nN][cC][tT][iI][oO][nN] ;
-
-// Special variables
-SPECIAL_VARIABLE : '*' LETTER (LETTER | DIGIT | SPECIAL_CHAR)* '*' ;
-
 // Keywords for Array Manipulation
 MAKE_ARRAY : [mM][aA][kK][eE][-][aA][rR][rR][aA][yY] ;
 AREF : [aA][rR][eE][fF] ;
@@ -148,12 +141,10 @@ ATOMIC_SYMBOL : LETTER ATOM_PART? ;
 STRING_START : '"' -> pushMode(STRING_MODE) ;
 ERROR_CHAR : . ;
 
-
 // Mode for handling FORMAT
 mode FORMAT_MODE;
 
-FORMAT_CONTENT : ~[~%)]* ('\\' [\r\n])* ;
-
+FORMAT_CONTENT : ~[~%)] (~[~%)] | '\\' [\r\n])* ; // Make sure it doesn't match empty string
 FORMAT_DIRECTIVE_T : '~' [tT] ;
 FORMAT_DIRECTIVE_S : '~' [sS] ;
 FORMAT_DIRECTIVE_A : '~' [aA] ;
@@ -168,15 +159,11 @@ FORMAT_NEWLINE : '~' '%' ;
 
 ESCAPED_CHARS : '\\' [btnfr"\\] ;
 
-
-
 FORMAT_END : ')' -> popMode ;
 FORMAT_ERROR_CHAR : . ;
 
-
 mode STRING_MODE;
-STRING_CONTENT : ~["]* ('\\' [\r\n])* ;
+STRING_CONTENT : ~["\\]+ ('\\' .)* ; // Ensure at least one character
 ESCAPED_CHAR   : '\\' [btnfr"\\] ;
 STRING_ERROR_CHAR : ~'"' ;
 STRING_END     : '"' -> popMode ;
-
