@@ -1,5 +1,2 @@
-(setq x 5)
-(defun add (a b) (+ a b))
-(if (< x 10) "small" "large")
-(dotimes (i 10) (print i))
-(+ x 10)
+(print (format t "Number  is even"i ))
+      (print (format t "Number ~d is odd"i ))

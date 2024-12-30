@@ -14,7 +14,10 @@ statement
     | function_definition
     | conditional
     | loop
-    | expression // Expressions are also valid standalone statements
+    | print_statement
+    | expression
+    | block_statement
+    | return_statement
     ;
 
 // Variable definition (e.g., (setq x 5))
@@ -29,12 +32,12 @@ function_definition
 
 // Parameters for a function
 parameter_list
-    : IDENTIFIER+ // At least one parameter
+    : IDENTIFIER* // Accept zero or more parameters
     ;
 
 // A block of expressions (e.g., (progn ...))
 block
-    : LPAREN (statement | expression)* RPAREN
+    : (statement | expression)*
     ;
 
 // Conditionals (e.g., (if (< x 10) "small" "large"))
@@ -51,18 +54,32 @@ loop
 expression
     : atom
     | list
+    | format_expression
     | operation
+    | operator
+    | print_statement
     | function_call
+    | lambda_function
+    | case_expression
+    | progn_block
+    | structure_definition
+    | make_structure
     ;
 
 // Atoms (numbers, strings, identifiers, booleans)
 atom
     : INTEGER
     | REAL
-    | STRING_CONTENT
+    | STRING_START (escaped_char | string_content)* STRING_END // Handles strings with escaped characters
     | IDENTIFIER
-    | TERMINAL // For true/false values
+    | KEYWORD
+    | TERMINAL
+    |SPECIAL_IDENTIFIER
     ;
+
+escaped_char : ESCAPED_CHAR ;
+
+string_content : STRING_CONTENT ;
 
 // List of expressions
 list
@@ -89,5 +106,84 @@ operator
 
 // Condition (used in if or loops)
 condition
-    : LPAREN operator expression+ RPAREN
+    : LPAREN (operator | IDENTIFIER) expression+ RPAREN
+    ;
+
+// Print statement (e.g., (print x))
+print_statement
+    : LPAREN PRINT expression RPAREN
+    ;
+
+// Format expression (e.g., (format t "The number ~d is ~s" num val))
+format_expression
+    : LPAREN FORMAT destination (format_directive | format_content)* FORMAT_END expression* RPAREN
+    ;
+
+
+
+
+// Destination for format (e.g., t, nil, or an identifier)
+destination
+    : FORMAT_T
+    | FORMAT_NIL
+    | IDENTIFIER
+    ;
+
+// Format content
+format_content
+    : FORMAT_CONTENT
+    ;
+
+// Format directives
+format_directive
+    : FORMAT_DIRECTIVE_T
+    | FORMAT_DIRECTIVE_S
+    | FORMAT_DIRECTIVE_A
+    | FORMAT_DIRECTIVE_D
+    | FORMAT_DIRECTIVE_F
+    | FORMAT_DIRECTIVE_E
+    | FORMAT_DIRECTIVE_G
+    | FORMAT_DIRECTIVE_L
+    | FORMAT_DIRECTIVE_R
+    | FORMAT_NEWLINE
+    ;
+
+// Lambda function (e.g., (lambda (x) (+ x 1)))
+lambda_function
+    : LPAREN LAMBDA LPAREN parameter_list RPAREN block RPAREN
+    ;
+
+// Case expression (e.g., (case x ((1 2) "one or two") (otherwise "other")))
+case_expression
+    : LPAREN CASE expression (case_clause)* RPAREN
+    ;
+
+case_clause
+    : LPAREN expression+ RPAREN
+    | LPAREN OTHERWISE expression+ RPAREN
+    ;
+
+// Progn block (e.g., (progn (print "Hello") (print "World")))
+progn_block
+    : LPAREN PROGN (statement | expression)* RPAREN
+    ;
+
+// Structure definition (e.g., (defstruct point x y))
+structure_definition
+    : LPAREN DEFSTRUCT IDENTIFIER (IDENTIFIER)* RPAREN
+    ;
+
+// Make structure (e.g., (make-struct point :x 10 :y 20))
+make_structure
+    : LPAREN MAKE_STRUCT IDENTIFIER (KEYWORD expression)* RPAREN
+    ;
+
+// Block statement (e.g., (block my-block (print "In block")))
+block_statement
+    : LPAREN BLOCK IDENTIFIER (statement | expression)* RPAREN
+    ;
+
+// Return statement (e.g., (return-from my-block x))
+return_statement
+    : LPAREN RETURN_FROM IDENTIFIER expression RPAREN
     ;

@@ -1,3 +1,4 @@
+// Updated LispLexer.g4
 lexer grammar LispLexer;
 
 // Default mode tokens
@@ -20,12 +21,12 @@ DOTIMES : [dD][oO][tT][iI][mM][eE][sS] ;
 DOLIST : [dD][oO][lL][iI][sS][tT] ;
 PRINT : [pP][rR][iI][nN][tT] ;
 FORMAT : [fF][oO][rR][mM][aA][tT] ;
-FORMAT_T : [tT] -> pushMode(FORMAT_MODE) ;
-FORMAT_NIL : [nN][iI][lL]  -> pushMode(FORMAT_MODE) ;
+FORMAT_T : [tT]' "' -> pushMode(FORMAT_MODE) ;
+FORMAT_NIL : [nN][iI][lL]' "' -> pushMode(FORMAT_MODE) ;
 
 OPTIONAL : [&][oO][pP][tT][iI][oO][nN][aA][lL] ;
 REST     : [&][rR][eE][sS][tT] ;
-KEY      : [&][kK][eE][yY] ;   // (defun foo (&key (x 5)) x)
+KEY      : [&][kK][eE][yY] ;
 
 // Arithmetic functions
 FLOOR : [fF][lL][oO][oO][rR] ;
@@ -68,7 +69,7 @@ DO_STAR : [dD][oO][*] ;
 
 // List operations
 LIST     : [lL][iI][sS][tT] ;
-PUSH     : [pP][uU][sS][hH] ; //(push 4 a)
+PUSH     : [pP][uU][sS][hH] ;
 POP      : [pP][oO][pP] ;
 
 // Keywords for special forms
@@ -144,7 +145,10 @@ ERROR_CHAR : . ;
 // Mode for handling FORMAT
 mode FORMAT_MODE;
 
-FORMAT_CONTENT : ~[~%)] (~[~%)] | '\\' [\r\n])* ; // Make sure it doesn't match empty string
+FORMAT_CONTENT
+    :(~["~])+   // Matches any content except ~, \, and "
+    ;
+
 FORMAT_DIRECTIVE_T : '~' [tT] ;
 FORMAT_DIRECTIVE_S : '~' [sS] ;
 FORMAT_DIRECTIVE_A : '~' [aA] ;
@@ -156,14 +160,18 @@ FORMAT_DIRECTIVE_L : '~' [lL] ;
 FORMAT_DIRECTIVE_R : '~' [rR] ;
 
 FORMAT_NEWLINE : '~' '%' ;
-
-ESCAPED_CHARS : '\\' [btnfr"\\] ;
-
+FORMATQUATAION:'"';
 FORMAT_END : ')' -> popMode ;
+
 FORMAT_ERROR_CHAR : . ;
 
 mode STRING_MODE;
-STRING_CONTENT : ~["\\]+ ('\\' .)* ; // Ensure at least one character
-ESCAPED_CHAR   : '\\' [btnfr"\\] ;
-STRING_ERROR_CHAR : ~'"' ;
-STRING_END     : '"' -> popMode ;
+
+STRING_CONTENT : ~["\\]+ ;  // Match any non-escaped characters inside the string
+
+ESCAPED_CHAR   : '\\' [btnfr"\\] ;  // Single backslash escape sequences (e.g., \n, \t, \", \\)
+
+// Error handling
+STRING_ERROR_CHAR : ~['"\\] ;  // Any character that is not valid inside a string
+
+STRING_END     : '"' -> popMode ;  // End of the string, pop the STRING_MODE
