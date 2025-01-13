@@ -9,6 +9,7 @@ LET_STAR : [lL][eE][tT][*] ;
 
 // Conditionals
 IF : [iI][fF] ;
+WHILE:[wW][hH][iI][lL][eE];
 COND : [cC][oO][nN][dD] ;
 
 // Lambda functions

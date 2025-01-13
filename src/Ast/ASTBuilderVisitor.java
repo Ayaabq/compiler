@@ -1,16 +1,14 @@
 package Ast;
 
-
 import Grammar.LispParserBaseVisitor;
 import Grammar.LispParser;
 
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode>{
+public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
     private final List<String> declaredVariables = new ArrayList<>(); // Tracks declared variables
     private final Map<String, Object> symbolTable = new HashMap<>(); // Tracks variable values
     public final List<String> semanticErrors = new ArrayList<>(); // Stores semantic errors
@@ -23,37 +21,33 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode>{
         }
         return programNode;
     }
+
     @Override
     public ASTNode visitVariable_definition(LispParser.Variable_definitionContext ctx) {
         String identifier = ctx.IDENTIFIER().getText();
         ASTNode expressionNode = visit(ctx.expression());
-
-        // Check if the expression node is an OperationNode
+        Object value;
+        // Evaluate the expression node
         if (expressionNode instanceof OperationNode) {
             OperationNode operationNode = (OperationNode) expressionNode;
-            Object value = operationNode.getResult(); // Get the result directly from the operation
-
-            // Store the value of the operation result in the symbol table
-            symbolTable.put(identifier, value);
+            value = operationNode.getResult();
         } else {
-            // If it's not an operation, evaluate normally (for AtomNode or other types)
-            Object value = evaluateExpression(expressionNode);
-
-
-            // Store the value of the evaluated expression in the symbol table
-            symbolTable.put(identifier, value);
+            value = evaluateExpression(expressionNode);
         }
 
-        // Check if the variable has already been declared to avoid semantic errors
+        // Check if the variable is already defined
         if (declaredVariables.contains(identifier)) {
-            semanticErrors.add("Variable '" + identifier + "' is already defined.");
+            // Update the value in the symbol table
+            symbolTable.put(identifier, value);
         } else {
+            // Add the variable to the declaredVariables set and symbol table
             declaredVariables.add(identifier);
+            symbolTable.put(identifier, value);
         }
 
-        // Return the VariableDefinitionNode with the expression node
         return new VariableDefinitionNode(identifier, expressionNode);
     }
+
 
     @Override
     public ASTNode visitFunction_definition(LispParser.Function_definitionContext ctx) {
@@ -63,57 +57,101 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode>{
             parameters.add(param.getText());
         }
         ASTNode body = visit(ctx.block());
-
         return new FunctionDefinitionNode(functionName, parameters, body);
     }
 
     @Override
     public ASTNode visitConditional(LispParser.ConditionalContext ctx) {
-
-        // Visit the condition
-        ASTNode condition1 = visit(ctx.condition()); // This handles the operator or identifier
-
-        // If the condition is an OperationNode or AtomNode, get its result
+        ASTNode condition1 = visit(ctx.condition());
         Object conditionValue = getConditionValue(condition1);
         boolean condition = Boolean.parseBoolean(conditionValue.toString());
 
-
-
-        // Visit the true branch (expression)
         ASTNode trueBranch = visit(ctx.expression(0));
-
-        // Visit the false branch if it exists, otherwise set it to null
         ASTNode falseBranch = visit(ctx.expression(1));
 
-        // Return a ConditionalNode with the parsed condition, trueBranch, and falseBranch
         return new ConditionalNode(condition, trueBranch, falseBranch);
     }
 
     // Helper method to extract the value from the condition
     private Object getConditionValue(ASTNode condition) {
         if (condition instanceof OperationNode) {
-            return ((OperationNode) condition).getResult(); // Get the result from the operation
+            return ((OperationNode) condition).getResult();
         } else if (condition instanceof AtomNode) {
-            return ((AtomNode) condition).getValue(); // Get the value from AtomNode
+            return ((AtomNode) condition).getValue();
         }
-        return null; // Handle other cases as needed
+        return null;
     }
-
-
 
     @Override
     public ASTNode visitLoop(LispParser.LoopContext ctx) {
+        // Extract the iterator name
         String iterator = ctx.IDENTIFIER().getText();
-        ASTNode limit = visit(ctx.expression());
-        ASTNode body = visit(ctx.block());
 
-        return new LoopNode(iterator, limit, body);
+        // Evaluate the loop limit expression to an ASTNode
+        ASTNode limitNode = visit(ctx.expression());
+
+        // Try to evaluate the limit as an integer
+        int limitValue;
+        try {
+            limitValue = Integer.parseInt(evaluateExpression(limitNode).toString());
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Loop limit must evaluate to a numeric value.");
+        }
+
+        // Create a list to store the executed body for each iteration
+        List<ASTNode> bodyList = new ArrayList<>();
+
+        // Loop from 0 to the limit value
+        for (int i = 0; i < limitValue; i++) {
+            // Add the iterator value to the scope or symbol table
+            symbolTable.put(iterator, i);
+
+            // Visit the block for the loop body and evaluate it
+            ASTNode bodyNode = visit(ctx.block());
+
+            // Add the evaluated body node to the list
+            bodyList.add(bodyNode);
+        }
+
+        // Remove the iterator variable from the scope or symbol table after the loop
+        symbolTable.remove(iterator);
+
+        // Return the LoopNode with the iterator, limit, and the body list
+        return new LoopNode(iterator, limitNode, bodyList);
     }
+
+
+
+    @Override
+    public ASTNode visitBlock(LispParser.BlockContext ctx) {
+        // Create a new BlockNode to hold the statements and expressions
+        BlockNode blockNode = new BlockNode();
+
+        // Iterate through all child nodes of the block
+        for (int i = 0; i < ctx.children.size(); i++) {
+            var child = ctx.children.get(i);
+
+            // Check if the child is a StatementContext
+            if (child instanceof LispParser.StatementContext) {
+                // If it's a statement, visit it and add to the block
+                ASTNode statementNode = visit((LispParser.StatementContext) child);
+                blockNode.addStatement(statementNode);
+            }
+            // Check if the child is an ExpressionContext
+            else if (child instanceof LispParser.ExpressionContext) {
+                // If it's an expression, visit it and add to the block
+                ASTNode expressionNode = visit((LispParser.ExpressionContext) child);
+                blockNode.addExpression(expressionNode);
+            }
+        }
+
+        return blockNode;
+    }
+
+
 
     @Override
     public ASTNode visitExpression(LispParser.ExpressionContext ctx) {
-        // Log the input context for debugging
-
         if (ctx.atom() != null) {
             return visit(ctx.atom());
         } else if (ctx.list() != null) {
@@ -132,23 +170,21 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode>{
             return visit(ctx.structure_definition());
         } else if (ctx.make_structure() != null) {
             return visit(ctx.make_structure());
-        }else if(ctx.print_statement()!=null){
+        } else if (ctx.print_statement() != null) {
             return visit(ctx.print_statement());
         }
 
-        // Fallback for unmatched cases
-        return null;
+        return null; // Fallback for unmatched cases
     }
-
 
     @Override
     public ASTNode visitAtom(LispParser.AtomContext ctx) {
         if (ctx.INTEGER() != null) {
-            return new AtomNode(ctx.INTEGER().getText()); // Integer as String
+            return new AtomNode(ctx.INTEGER().getText());
         } else if (ctx.REAL() != null) {
-            return new AtomNode(ctx.REAL().getText()); // Real value as String
+            return new AtomNode(ctx.REAL().getText());
         } else if (ctx.STRING_START() != null) {
-            return new AtomNode(ctx.getText().substring(1, ctx.getText().length() - 1)); // Remove quotes
+            return new AtomNode(ctx.getText().substring(1, ctx.getText().length() - 1));
         } else if (ctx.IDENTIFIER() != null) {
             String identifier = ctx.IDENTIFIER().getText();
             if (!declaredVariables.contains(identifier)) {
@@ -165,14 +201,10 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode>{
         return null; // Return null if no valid atom type matches
     }
 
-
-
     @Override
     public ASTNode visitList(LispParser.ListContext ctx) {
         ListNode listNode = new ListNode();
-        // Loop through the child nodes in the ListContext
         for (var exprContext : ctx.children) {
-            // Check if the child node is an expression (either an atom or list)
             if (exprContext instanceof LispParser.ExpressionContext) {
                 ASTNode element = visit((LispParser.ExpressionContext) exprContext);
                 listNode.addElement(element);
@@ -187,11 +219,8 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode>{
         ASTNode leftNode = visit(ctx.expression(0));
         ASTNode rightNode = visit(ctx.expression(1));
 
-        // Create an OperationNode, which will calculate the result automatically
         return new OperationNode(operator, leftNode, rightNode);
     }
-
-
 
     @Override
     public ASTNode visitFunction_call(LispParser.Function_callContext ctx) {
@@ -202,28 +231,20 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode>{
         }
         return functionCallNode;
     }
+
     private Object evaluateExpression(ASTNode node) {
         if (node instanceof AtomNode) {
-            // AtomNode contains the value (e.g., a number or variable value)
             return ((AtomNode) node).getValue();
         } else if (node instanceof OperationNode) {
-            // OperationNode contains an operator and operands
             OperationNode operation = (OperationNode) node;
-
-            // Recursively evaluate left and right operands
             Object leftValue = evaluateExpression(operation.getLeft());
             Object rightValue = evaluateExpression(operation.getRight());
-
-            // Perform the operation and return the result
             return performOperation(operation.getOperator(), leftValue, rightValue);
         }
-
-        // Add cases for other types of expressions as needed
         return null;
     }
 
     private Object performOperation(String operator, Object left, Object right) {
-        // Check if operands are numbers
         if (left instanceof Number && right instanceof Number) {
             double leftNum = ((Number) left).doubleValue();
             double rightNum = ((Number) right).doubleValue();
@@ -239,15 +260,12 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode>{
                     if (rightNum != 0) {
                         return leftNum / rightNum;
                     } else {
-                        // Division by zero case
-                        return Double.NaN;
+                        return Double.NaN; // Division by zero case
                     }
                 default:
-                    return null;  // Handle other operators as needed
+                    return null;
             }
         }
-
-        // Handle other operand types (e.g., strings or boolean operators) here if needed
         return null;
     }
 
@@ -314,34 +332,21 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode>{
     @Override
     public ASTNode visitCondition(LispParser.ConditionContext ctx) {
         if (ctx.operator() != null) {
-            // Retrieve the operator and operands
             String operator = ctx.operator().getText();
-            ASTNode left = visit(ctx.expression(0)); // First operand
-            ASTNode right = visit(ctx.expression(1)); // Second operand
+            ASTNode left = visit(ctx.expression(0));
+            ASTNode right = visit(ctx.expression(1));
 
-            // Construct the OperationNode with operator and operands
             OperationNode operationNode = new OperationNode(operator, left, right);
-
-            // Get the result of the operation
             Object result = operationNode.getResult();
-
-
-            // Return the result as an AtomNode
             return new AtomNode(result.toString());
         } else if (ctx.IDENTIFIER() != null) {
-            // Handle identifiers directly
             String identifier = ctx.IDENTIFIER().getText();
-            Object value = symbolTable.get(identifier); // Retrieve the value from the symbol table
+            Object value = symbolTable.get(identifier);
             if (value == null) {
                 throw new RuntimeException("Variable '" + identifier + "' is not initialized.");
             }
             return new AtomNode(value.toString());
         }
-
         return null; // Default case if neither operator nor identifier is present
     }
-
-
-
-
 }

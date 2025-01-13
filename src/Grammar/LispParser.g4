@@ -47,7 +47,7 @@ conditional
 
 // Loops (e.g., (dotimes (i 10) (print i)))
 loop
-    : LPAREN DOTIMES LPAREN IDENTIFIER expression RPAREN block RPAREN
+    : LPAREN (DOTIMES|WHILE) LPAREN IDENTIFIER expression RPAREN block RPAREN
     ;
 
 // General expression

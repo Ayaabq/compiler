@@ -15,7 +15,7 @@ public class ConditionalNode extends ASTNode {
     public String prettyPrint(String indent) {
         StringBuilder sb = new StringBuilder();
 
-System.out.println(condition);
+
             if (condition) { // Compare the value safely
                 if (trueBranch != null) {
                     sb.append(indent)
