@@ -11,6 +11,6 @@ public class VariableDefinitionNode extends ASTNode {
 
     @Override
     public String prettyPrint(String indent) {
-        return indent + "VariableDefinition: " + identifier + " = " + expression.prettyPrint("");
+        return indent + identifier + " = " + expression.prettyPrint("");
     }
 }

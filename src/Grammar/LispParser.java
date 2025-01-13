@@ -591,18 +591,20 @@ public class LispParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class ConditionalContext extends ParserRuleContext {
+		public ExpressionContext trueBranch;
+		public ExpressionContext falseBranch;
 		public TerminalNode LPAREN() { return getToken(LispParser.LPAREN, 0); }
 		public TerminalNode IF() { return getToken(LispParser.IF, 0); }
 		public ConditionContext condition() {
 			return getRuleContext(ConditionContext.class,0);
 		}
+		public TerminalNode RPAREN() { return getToken(LispParser.RPAREN, 0); }
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
 		}
 		public ExpressionContext expression(int i) {
 			return getRuleContext(ExpressionContext.class,i);
 		}
-		public TerminalNode RPAREN() { return getToken(LispParser.RPAREN, 0); }
 		public ConditionalContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -636,14 +638,14 @@ public class LispParser extends Parser {
 			setState(108);
 			condition();
 			setState(109);
-			expression();
+			((ConditionalContext)_localctx).trueBranch = expression();
 			setState(111);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (((((_la - 37)) & ~0x3f) == 0 && ((1L << (_la - 37)) & 2255085202538503L) != 0)) {
 				{
 				setState(110);
-				expression();
+				((ConditionalContext)_localctx).falseBranch = expression();
 				}
 			}
 

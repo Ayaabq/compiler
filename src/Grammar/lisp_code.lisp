@@ -1,7 +1,5 @@
 (setq x 10)
 (setq y (+ x 5))
-(if (> x y)
+(if (> y x)
     (print "x is greater")
     (print "y is greater"))
-(defun add (a b) (+ a b))
-(print (add x y))
