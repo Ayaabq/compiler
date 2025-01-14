@@ -15,7 +15,6 @@ public class WhileLoopNode extends ASTNode {
     public String prettyPrint(String indent) {
         StringBuilder sb = new StringBuilder();
         sb.append(indent).append("While Loop:\n");
-        sb.append(indent).append("    Condition: ").append(condition.prettyPrint(indent + "        ")).append("\n");
         sb.append(indent).append("    Body:\n");
 
         for (ASTNode bodyNode : body) {

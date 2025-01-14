@@ -59,6 +59,12 @@ public interface LispParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitLoop(LispParser.LoopContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link LispParser#while_loop}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitWhile_loop(LispParser.While_loopContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link LispParser#expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

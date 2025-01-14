@@ -9,6 +9,7 @@ public class PrintStatementNode extends ASTNode {
 
     @Override
     public String prettyPrint(String indent) {
-        return indent + expression.prettyPrint(indent + "    ");
+
+        return indent + "PrintStatement:\n" + expression.prettyPrint( "    ");
     }
 }

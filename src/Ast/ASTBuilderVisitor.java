@@ -2,6 +2,7 @@ package Ast;
 
 import Grammar.LispParserBaseVisitor;
 import Grammar.LispParser;
+
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
             declaredVariables.add(identifier);
             symbolTable.put(identifier, value);
         }
-        System.out.println(symbolTable);
+
         return new VariableDefinitionNode(identifier, expressionNode);
     }
 
@@ -64,7 +65,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
 
         FunctionDefinitionNode functionNode = new FunctionDefinitionNode(functionName, parameters, blockContext);
         functionTable.put(functionName, functionNode); // Store the function in the table
-        System.out.println( symbolTable+ "raghad");
+
         return functionNode;
     }
 
@@ -222,7 +223,10 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
         } else if (ctx.REAL() != null) {
             return new AtomNode(ctx.REAL().getText());
         } else if (ctx.STRING_START() != null) {
-            return new AtomNode(ctx.getText().substring(1, ctx.getText().length() - 1));
+            // Extract the raw string and resolve escaped characters
+            String rawString = ctx.getText().substring(1, ctx.getText().length() - 1); // Remove surrounding quotes
+            String resolvedString = resolveEscapedCharacters(rawString);
+            return new AtomNode(resolvedString);
         } else if (ctx.IDENTIFIER() != null) {
             String identifier = ctx.IDENTIFIER().getText();
 
@@ -240,6 +244,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
         }
         return null; // Return null if no valid atom type matches
     }
+
 
     @Override
     public ASTNode visitList(LispParser.ListContext ctx) {
@@ -281,8 +286,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
                 if (paramValue == null) {
                     System.out.println("Warning: Parameter '" + paramNames.get(i) + "' evaluated to null.");
                 }
-                System.out.println(paramNames.get(i) +"roro");
-                System.out.println(paramValue +"roro");
+
                 functionParams.put(paramNames.get(i), paramValue);
                 declaredVariables.add(paramNames.get(i));
                 symbolTable.put(paramNames.get(i), paramValue);
@@ -292,7 +296,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
             LispParser.BlockContext functionBody = function.getBlockContext();
 
             ASTNode result = visit(functionBody);
-            System.out.println(symbolTable +"roro");
+
             // After the function body execution, remove the parameters from the symbol table
             for (String param : paramNames) {
                 declaredVariables.remove(param);
@@ -314,15 +318,6 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
 
         return listNode;
     }
-
-
-
-
-
-
-
-
-
 
 
     @Override
@@ -391,7 +386,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
                 throw new RuntimeException("Operation has null operand(s).");
             }
 
-            return performOperation(operation.getOperator(), leftValue, rightValue);
+            return ((OperationNode) node).getResult();
         }
         return null;
     }
@@ -427,6 +422,14 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
         ASTNode expression = visit(ctx.expression());
         return new PrintStatementNode(expression);
     }
+    private String resolveEscapedCharacters(String raw) {
+        return raw
+                .replace("\\n", "\n")
+                .replace("\\t", "\t")
+                .replace("\\\"", "\"")
+                .replace("\\\\", "\\");
+    }
+
 
     @Override
     public ASTNode visitFormat_expression(LispParser.Format_expressionContext ctx) {
@@ -453,18 +456,88 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
         ASTNode body = visit(ctx.block());
         return new LambdaFunctionNode(parameters, body);
     }
+    @Override
+    public CaseClauseNode visitCase_clause(LispParser.Case_clauseContext ctx) {
+        List<ASTNode> conditions = new ArrayList<>();
+        List<ASTNode> statements = new ArrayList<>();
+
+        // Handle 'otherwise' clause
+        if (ctx.OTHERWISE() != null) {
+            for (var expression : ctx.expression()) {
+                statements.add(visit(expression));
+            }
+            return new CaseClauseNode(conditions, statements); // Empty conditions list for 'otherwise'
+        }
+
+        // Handle regular clauses
+        int conditionCount = ctx.expression().size() - 1; // Last expression is the statement
+        for (int i = 0; i < conditionCount; i++) {
+            conditions.add(visit(ctx.expression(i)));
+        }
+
+        // Add statements
+        for (int i = conditionCount; i < ctx.expression().size(); i++) {
+            statements.add(visit(ctx.expression(i)));
+        }
+
+        return new CaseClauseNode(conditions, statements);
+    }
 
     @Override
     public ASTNode visitCase_expression(LispParser.Case_expressionContext ctx) {
+        // Visit the main expression
         ASTNode caseExpression = visit(ctx.expression());
         CaseExpressionNode caseNode = new CaseExpressionNode(caseExpression);
 
+        // Visit each clause and add it
         for (var clause : ctx.case_clause()) {
-            caseNode.addClause(visit(clause));
+            CaseClauseNode clauseNode = (CaseClauseNode) visit(clause);
+
+            // Now compare each condition with the caseExpression inside the visitor
+            boolean conditionMatched = false;
+
+            // Compare the caseExpression with each condition in the clause
+            for (ASTNode condition : clauseNode.getConditions()) {
+                Object caseValue = evaluateExpression(caseExpression);
+                Object conditionValue = evaluateExpression(condition);
+
+                // Debugging output
+
+                // Perform the comparison, considering both types and values
+                boolean valuesEqual = false;
+
+                // Check if the values are the same type and are equal
+                if (caseValue.getClass() == conditionValue.getClass()) {
+                    valuesEqual = caseValue.equals(conditionValue);
+                } else {
+                    // Handle cases where types are different, but values can still be considered equal
+                    // For example, comparing "1" (String) with 1 (Integer), or "true" (String) with true (Boolean)
+                    if (caseValue instanceof String && conditionValue instanceof Integer) {
+                        valuesEqual = Integer.parseInt((String) caseValue) == (Integer) conditionValue;
+                    } else if (caseValue instanceof Integer && conditionValue instanceof String) {
+                        valuesEqual = (Integer) caseValue == Integer.parseInt((String) conditionValue);
+                    } else if (caseValue instanceof Boolean && conditionValue instanceof String) {
+                        valuesEqual = Boolean.parseBoolean((String) conditionValue) == (Boolean) caseValue;
+                    } else if (caseValue instanceof String && conditionValue instanceof Boolean) {
+                        valuesEqual = (Boolean) caseValue == Boolean.parseBoolean((String) conditionValue);
+                    }
+                }
+
+                if (valuesEqual) {
+                    conditionMatched = true;
+                    break; // Stop once a match is found
+                }
+            }
+
+            // If a condition matches, add the clause to the caseNode
+            if (conditionMatched) {
+                caseNode.addClause(clauseNode);
+            }
         }
 
         return caseNode;
     }
+
 
     @Override
     public ASTNode visitProgn_block(LispParser.Progn_blockContext ctx) {
