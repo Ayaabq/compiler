@@ -88,6 +88,16 @@ public interface LispParserListener extends ParseTreeListener {
 	 */
 	void exitLoop(LispParser.LoopContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link LispParser#while_loop}.
+	 * @param ctx the parse tree
+	 */
+	void enterWhile_loop(LispParser.While_loopContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link LispParser#while_loop}.
+	 * @param ctx the parse tree
+	 */
+	void exitWhile_loop(LispParser.While_loopContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link LispParser#expression}.
 	 * @param ctx the parse tree
 	 */

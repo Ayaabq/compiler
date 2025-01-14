@@ -40,6 +40,7 @@ public class OperationNode extends ASTNode {
             case "-":
                 return Integer.parseInt(leftValue.toString()) - Integer.parseInt(rightValue.toString());
             case "*":
+
                 return Integer.parseInt(leftValue.toString()) * Integer.parseInt(rightValue.toString());
             case "/":
                 int denominator = Integer.parseInt(rightValue.toString());

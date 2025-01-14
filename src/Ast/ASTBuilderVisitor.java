@@ -2,6 +2,7 @@ package Ast;
 
 import Grammar.LispParserBaseVisitor;
 import Grammar.LispParser;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,6 +12,7 @@ import java.util.Map;
 public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
     private final List<String> declaredVariables = new ArrayList<>(); // Tracks declared variables
     private final Map<String, Object> symbolTable = new HashMap<>(); // Tracks variable values
+    private final Map<String, FunctionDefinitionNode> functionTable = new HashMap<>();//Tracks the function
     public final List<String> semanticErrors = new ArrayList<>(); // Stores semantic errors
 
     @Override
@@ -44,7 +46,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
             declaredVariables.add(identifier);
             symbolTable.put(identifier, value);
         }
-
+        System.out.println(symbolTable);
         return new VariableDefinitionNode(identifier, expressionNode);
     }
 
@@ -56,9 +58,16 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
         for (var param : ctx.parameter_list().IDENTIFIER()) {
             parameters.add(param.getText());
         }
-        ASTNode body = visit(ctx.block());
-        return new FunctionDefinitionNode(functionName, parameters, body);
+
+        // Store the block context for execution
+        LispParser.BlockContext blockContext = ctx.block();
+
+        FunctionDefinitionNode functionNode = new FunctionDefinitionNode(functionName, parameters, blockContext);
+        functionTable.put(functionName, functionNode); // Store the function in the table
+        System.out.println( symbolTable+ "raghad");
+        return functionNode;
     }
+
 
     @Override
     public ASTNode visitConditional(LispParser.ConditionalContext ctx) {
@@ -120,6 +129,34 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
         return new LoopNode(iterator, limitNode, bodyList);
     }
 
+    @Override
+    public ASTNode visitWhile_loop(LispParser.While_loopContext ctx) {
+        // Evaluate the condition expression and get the result
+        ASTNode conditionNode = visit(ctx.operation());
+
+        // Get the result from the conditionNode using the getResult method
+        Object conditionValue = ((OperationNode) conditionNode).getResult();
+
+         // Print the condition to verify the value
+
+        // Declare the list for storing the loop body nodes
+        List<ASTNode> bodyList = new ArrayList<>();
+
+        // Execute the loop as long as the condition evaluates to true
+        while (Boolean.TRUE.equals(conditionValue)) {
+
+            ASTNode bodyNode = visit(ctx.block());
+
+            bodyList.add(bodyNode);
+             conditionNode = visit(ctx.operation());
+            // Recalculate the condition after each loop iteration (in case it changes)
+            conditionValue = ((OperationNode) conditionNode).getResult();
+        }
+
+        // Return a WhileLoopNode containing the condition and the body
+        return new WhileLoopNode(conditionNode, bodyList);
+    }
+
 
 
     @Override
@@ -144,6 +181,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
                 blockNode.addExpression(expressionNode);
             }
         }
+
 
         return blockNode;
     }
@@ -187,6 +225,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
             return new AtomNode(ctx.getText().substring(1, ctx.getText().length() - 1));
         } else if (ctx.IDENTIFIER() != null) {
             String identifier = ctx.IDENTIFIER().getText();
+
             if (!declaredVariables.contains(identifier)) {
                 semanticErrors.add("Variable '" + identifier + "' is not declared.");
                 return null;
@@ -196,6 +235,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
                 semanticErrors.add("Variable '" + identifier + "' is not initialized.");
                 return null;
             }
+
             return new AtomNode(String.valueOf(value));
         }
         return null; // Return null if no valid atom type matches
@@ -203,15 +243,87 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitList(LispParser.ListContext ctx) {
+        if (ctx.children == null || ctx.children.isEmpty()) {
+            return new ListNode(); // Empty list
+        }
+
+        // The first child (index 1) is the function name
+        ParseTree firstChild = ctx.children.get(1);
+
+        // Check if the first child is an identifier, which would be a function name
+        String firstChildText = firstChild.getText();
+
+        // If the first child text is a function name in the function table, treat it as a function call
+        if (functionTable.containsKey(firstChildText)) {
+            List<ASTNode> arguments = new ArrayList<>();
+
+            // Process the arguments starting from the second child (index 2)
+            for (int i = 2; i < ctx.children.size() - 1; i++) {  // Skipping '(' and function name
+                ASTNode argument = visit(ctx.children.get(i));
+                arguments.add(argument);
+            }
+
+            // Retrieve the function definition from the function table
+            FunctionDefinitionNode function = functionTable.get(firstChildText);
+
+            // Create a map to store the arguments bound to the function's parameters
+            Map<String, Object> functionParams = new HashMap<>();
+
+            // Bind the arguments to the function's parameters
+            List<String> paramNames = function.getParameters();
+            if (paramNames.size() != arguments.size()) {
+                throw new RuntimeException("Function '" + firstChildText + "' expects " + paramNames.size() + " arguments, but got " + arguments.size() + ".");
+            }
+
+            // Store the arguments in the symbol table
+            for (int i = 0; i < paramNames.size(); i++) {
+                Object paramValue = evaluateExpression(arguments.get(i));
+                if (paramValue == null) {
+                    System.out.println("Warning: Parameter '" + paramNames.get(i) + "' evaluated to null.");
+                }
+                System.out.println(paramNames.get(i) +"roro");
+                System.out.println(paramValue +"roro");
+                functionParams.put(paramNames.get(i), paramValue);
+                declaredVariables.add(paramNames.get(i));
+                symbolTable.put(paramNames.get(i), paramValue);
+            }
+
+            // Now visit the function body (block) and execute it
+            LispParser.BlockContext functionBody = function.getBlockContext();
+
+            ASTNode result = visit(functionBody);
+            System.out.println(symbolTable +"roro");
+            // After the function body execution, remove the parameters from the symbol table
+            for (String param : paramNames) {
+                declaredVariables.remove(param);
+                symbolTable.remove(param);
+            }
+
+            // Return the result of the function body
+            return result;
+        }
+
+        // Otherwise, treat it as a regular list
         ListNode listNode = new ListNode();
-        for (var exprContext : ctx.children) {
-            if (exprContext instanceof LispParser.ExpressionContext) {
-                ASTNode element = visit((LispParser.ExpressionContext) exprContext);
+        for (var child : ctx.children) {
+            if (child instanceof LispParser.ExpressionContext) {
+                ASTNode element = visit((LispParser.ExpressionContext) child);
                 listNode.addElement(element);
             }
         }
+
         return listNode;
     }
+
+
+
+
+
+
+
+
+
+
 
     @Override
     public ASTNode visitOperation(LispParser.OperationContext ctx) {
@@ -225,12 +337,47 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitFunction_call(LispParser.Function_callContext ctx) {
         String functionName = ctx.IDENTIFIER().getText();
-        FunctionCallNode functionCallNode = new FunctionCallNode(functionName);
-        for (var expr : ctx.expression()) {
-            functionCallNode.addArgument(visit(expr));
+
+        FunctionDefinitionNode function = functionTable.get(functionName);
+
+        if (function == null) {
+            throw new RuntimeException("Function '" + functionName + "' is not defined.");
         }
-        return functionCallNode;
+
+        // Retrieve the list of parameter names from the function definition
+        List<String> paramNames = function.getParameters();
+        List<ASTNode> arguments = new ArrayList<>();
+
+        // Visit each argument in the function call and add to the arguments list
+        for (var expr : ctx.expression()) {
+            arguments.add(visit(expr));
+        }
+
+        // Check if the number of arguments matches the number of parameters
+        if (paramNames.size() != arguments.size()) {
+            throw new RuntimeException(
+                    "Function '" + functionName + "' expects " + paramNames.size() + " arguments, but got " + arguments.size() + ".");
+        }
+
+        // Map arguments to parameters in the symbol table
+        for (int i = 0; i < paramNames.size(); i++) {
+            declaredVariables.add(paramNames.get(i));
+            symbolTable.put(paramNames.get(i), evaluateExpression(arguments.get(i)));
+        }
+
+        // Visit the function's body (the block of code within the function definition)
+        LispParser.BlockContext functionBody = function.getBlockContext();
+        ASTNode result = visit(functionBody);
+
+        // Clean up the parameters from the symbol table after the function execution
+        for (String param : paramNames) {
+            symbolTable.remove(param);
+        }
+
+        // Return the result (from the function's body or last evaluated expression)
+        return result;
     }
+
 
     private Object evaluateExpression(ASTNode node) {
         if (node instanceof AtomNode) {
@@ -239,10 +386,16 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
             OperationNode operation = (OperationNode) node;
             Object leftValue = evaluateExpression(operation.getLeft());
             Object rightValue = evaluateExpression(operation.getRight());
+
+            if (leftValue == null || rightValue == null) {
+                throw new RuntimeException("Operation has null operand(s).");
+            }
+
             return performOperation(operation.getOperator(), leftValue, rightValue);
         }
         return null;
     }
+
 
     private Object performOperation(String operator, Object left, Object right) {
         if (left instanceof Number && right instanceof Number) {

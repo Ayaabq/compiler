@@ -14,7 +14,9 @@ public class ListNode extends ASTNode {
     public String prettyPrint(String indent) {
         StringBuilder sb = new StringBuilder();
         sb.append(indent).append("List:\n");
+
         for (ASTNode element : elements) {
+
             if (element != null) {
                 sb.append(element.prettyPrint(indent + "    ")).append("\n");
             } else {

@@ -32,7 +32,7 @@ public class BlockNode extends ASTNode {
     public String prettyPrint(String indent) {
         StringBuilder sb = new StringBuilder();
 
-
+          System.out.println("raghad");
         for (ASTNode statement : statements) {
             sb.append(statement.prettyPrint(indent + "    "));
         }

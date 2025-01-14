@@ -14,6 +14,7 @@ statement
     | function_definition
     | conditional
     | loop
+    |while_loop
     | print_statement
     | expression
     | block_statement
@@ -50,6 +51,7 @@ loop
     : LPAREN (DOTIMES|WHILE) LPAREN IDENTIFIER expression RPAREN block RPAREN
     ;
 
+while_loop:LPAREN WHILE operation block RPAREN;
 // General expression
 expression
     : atom
@@ -93,8 +95,9 @@ operation
 
 // Function calls (e.g., (funcall my-func arg1 arg2))
 function_call
-    : LPAREN FUNCALL IDENTIFIER expression* RPAREN
+    : LPAREN IDENTIFIER expression* RPAREN
     ;
+
 
 // Supported operators
 operator
