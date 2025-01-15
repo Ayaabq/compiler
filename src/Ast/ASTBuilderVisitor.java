@@ -115,7 +115,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
         for (int i = 0; i < limitValue; i++) {
             // Add the iterator value to the scope or symbol table
             symbolTable.put(iterator, i);
-
+             declaredVariables.add(iterator);
             // Visit the block for the loop body and evaluate it
             ASTNode bodyNode = visit(ctx.block());
 
@@ -125,6 +125,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
 
         // Remove the iterator variable from the scope or symbol table after the loop
         symbolTable.remove(iterator);
+        declaredVariables.remove(iterator);
 
         // Return the LoopNode with the iterator, limit, and the body list
         return new LoopNode(iterator, limitNode, bodyList);
@@ -211,6 +212,8 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
             return visit(ctx.make_structure());
         } else if (ctx.print_statement() != null) {
             return visit(ctx.print_statement());
+        }else if(ctx.format_expression()!= null){
+            return visit(ctx.format_expression());
         }
 
         return null; // Fallback for unmatched cases
@@ -219,6 +222,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitAtom(LispParser.AtomContext ctx) {
         if (ctx.INTEGER() != null) {
+
             return new AtomNode(ctx.INTEGER().getText());
         } else if (ctx.REAL() != null) {
             return new AtomNode(ctx.REAL().getText());
@@ -239,6 +243,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
                 semanticErrors.add("Variable '" + identifier + "' is not initialized.");
                 return null;
             }
+
 
             return new AtomNode(String.valueOf(value));
         }
@@ -419,7 +424,10 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitPrint_statement(LispParser.Print_statementContext ctx) {
+
         ASTNode expression = visit(ctx.expression());
+
+
         return new PrintStatementNode(expression);
     }
     private String resolveEscapedCharacters(String raw) {
@@ -436,16 +444,32 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
         String destination = ctx.destination().getText();
         FormatExpressionNode formatNode = new FormatExpressionNode(destination);
 
+        StringBuilder formatContent = new StringBuilder();
+        int exprIndex = 0;
+
+        // Iterate through the format content and directives
+        for (int i=0; i<ctx.format_content().size();i++) {
+            formatContent.append(ctx.format_content().get(i).getText());
+
+
+
+            formatContent.append(evaluateExpression(visit(ctx.expression().get(i))));
+        }
+
         for (var directive : ctx.format_directive()) {
             formatNode.addDirective(directive.getText());
         }
+        // Set the generated content to the FormatExpressionNode
+        formatNode.setContent(formatContent.toString());
 
+        // Add expressions to the formatNode for pretty printing if needed
         for (var expr : ctx.expression()) {
             formatNode.addExpression(visit(expr));
         }
 
         return formatNode;
     }
+
 
     @Override
     public ASTNode visitLambda_function(LispParser.Lambda_functionContext ctx) {
