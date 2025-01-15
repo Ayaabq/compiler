@@ -146,7 +146,6 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
 
         // Execute the loop as long as the condition evaluates to true
         while (Boolean.TRUE.equals(conditionValue)) {
-
             ASTNode bodyNode = visit(ctx.block());
 
             bodyList.add(bodyNode);
@@ -265,6 +264,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
 
         // If the first child text is a function name in the function table, treat it as a function call
         if (functionTable.containsKey(firstChildText)) {
+
             List<ASTNode> arguments = new ArrayList<>();
 
             // Process the arguments starting from the second child (index 2)
@@ -314,6 +314,7 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
 
         // Otherwise, treat it as a regular list
         ListNode listNode = new ListNode();
+        System.out.println(ctx.children);
         for (var child : ctx.children) {
             if (child instanceof LispParser.ExpressionContext) {
                 ASTNode element = visit((LispParser.ExpressionContext) child);
@@ -337,9 +338,10 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitFunction_call(LispParser.Function_callContext ctx) {
         String functionName = ctx.IDENTIFIER().getText();
+        FunctionCallNode functionCallNode = new FunctionCallNode(functionName);
 
+        // Retrieve the function definition from the function table
         FunctionDefinitionNode function = functionTable.get(functionName);
-
         if (function == null) {
             throw new RuntimeException("Function '" + functionName + "' is not defined.");
         }
@@ -356,7 +358,8 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
         // Check if the number of arguments matches the number of parameters
         if (paramNames.size() != arguments.size()) {
             throw new RuntimeException(
-                    "Function '" + functionName + "' expects " + paramNames.size() + " arguments, but got " + arguments.size() + ".");
+                    "Function '" + functionName + "' expects " + paramNames.size() + " arguments, but got " + arguments.size() + "."
+            );
         }
 
         // Map arguments to parameters in the symbol table
@@ -374,8 +377,11 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
             symbolTable.remove(param);
         }
 
-        // Return the result (from the function's body or last evaluated expression)
-        return result;
+        // Combine pretty print of the function call with the result
+        String resultWithPrettyPrint = functionCallNode.prettyPrint("") + "\nResult: " + result.prettyPrint("");
+
+        // Create a new node to encapsulate the result and the pretty print
+        return new PrintFunctionCallNode(result, resultWithPrettyPrint);
     }
 
 

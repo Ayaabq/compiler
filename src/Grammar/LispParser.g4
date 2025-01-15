@@ -85,7 +85,7 @@ string_content : STRING_CONTENT ;
 
 // List of expressions
 list
-    : LPAREN (atom|list)* RPAREN
+    : LPAREN LIST atom+ RPAREN
     ;
 
 // Operations (e.g., (+ x y))
