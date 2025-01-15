@@ -15,10 +15,11 @@ public class ListNode extends ASTNode {
         StringBuilder sb = new StringBuilder();
         sb.append(indent).append("List:\n");
 
+
         for (ASTNode element : elements) {
 
             if (element != null) {
-                sb.append(element.prettyPrint(indent + "    ")).append("\n");
+                sb.append(element.prettyPrint(indent + "    ")).append("\t");
             } else {
                 sb.append(indent + "    null element\n"); // Handle the null element gracefully
             }

@@ -12,4 +12,3 @@
     (* a b)) ; Return the product
     (print "Result of add-and-multiply:")
 (print (add-and-multiply x y))
-(list 1 2 3)

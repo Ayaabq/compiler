@@ -263,61 +263,20 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
         String firstChildText = firstChild.getText();
 
         // If the first child text is a function name in the function table, treat it as a function call
-        if (functionTable.containsKey(firstChildText)) {
 
-            List<ASTNode> arguments = new ArrayList<>();
-
-            // Process the arguments starting from the second child (index 2)
-            for (int i = 2; i < ctx.children.size() - 1; i++) {  // Skipping '(' and function name
-                ASTNode argument = visit(ctx.children.get(i));
-                arguments.add(argument);
-            }
-
-            // Retrieve the function definition from the function table
-            FunctionDefinitionNode function = functionTable.get(firstChildText);
-
-            // Create a map to store the arguments bound to the function's parameters
-            Map<String, Object> functionParams = new HashMap<>();
-
-            // Bind the arguments to the function's parameters
-            List<String> paramNames = function.getParameters();
-            if (paramNames.size() != arguments.size()) {
-                throw new RuntimeException("Function '" + firstChildText + "' expects " + paramNames.size() + " arguments, but got " + arguments.size() + ".");
-            }
-
-            // Store the arguments in the symbol table
-            for (int i = 0; i < paramNames.size(); i++) {
-                Object paramValue = evaluateExpression(arguments.get(i));
-                if (paramValue == null) {
-                    System.out.println("Warning: Parameter '" + paramNames.get(i) + "' evaluated to null.");
-                }
-
-                functionParams.put(paramNames.get(i), paramValue);
-                declaredVariables.add(paramNames.get(i));
-                symbolTable.put(paramNames.get(i), paramValue);
-            }
-
-            // Now visit the function body (block) and execute it
-            LispParser.BlockContext functionBody = function.getBlockContext();
-
-            ASTNode result = visit(functionBody);
-
-            // After the function body execution, remove the parameters from the symbol table
-            for (String param : paramNames) {
-                declaredVariables.remove(param);
-                symbolTable.remove(param);
-            }
-
-            // Return the result of the function body
-            return result;
-        }
 
         // Otherwise, treat it as a regular list
         ListNode listNode = new ListNode();
-        System.out.println(ctx.children);
-        for (var child : ctx.children) {
-            if (child instanceof LispParser.ExpressionContext) {
-                ASTNode element = visit((LispParser.ExpressionContext) child);
+
+        for (int i = 2; i < ctx.children.size() - 1; i++) {
+            ParseTree child = ctx.children.get(i);
+            System.out.println(child);
+
+            // Check if the child is an atom, list, or expression
+            if (child instanceof LispParser.AtomContext ||
+                    child instanceof LispParser.ListContext ) {
+
+                ASTNode element = visit(child);
                 listNode.addElement(element);
             }
         }
@@ -478,15 +437,6 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
 
 
     @Override
-    public ASTNode visitLambda_function(LispParser.Lambda_functionContext ctx) {
-        List<String> parameters = new ArrayList<>();
-        for (var param : ctx.parameter_list().IDENTIFIER()) {
-            parameters.add(param.getText());
-        }
-        ASTNode body = visit(ctx.block());
-        return new LambdaFunctionNode(parameters, body);
-    }
-    @Override
     public CaseClauseNode visitCase_clause(LispParser.Case_clauseContext ctx) {
         List<ASTNode> conditions = new ArrayList<>();
         List<ASTNode> statements = new ArrayList<>();
@@ -568,22 +518,6 @@ public class ASTBuilderVisitor extends LispParserBaseVisitor<ASTNode> {
         return caseNode;
     }
 
-
-    @Override
-    public ASTNode visitProgn_block(LispParser.Progn_blockContext ctx) {
-        PrognBlockNode prognNode = new PrognBlockNode();
-        for (var stmt : ctx.statement()) {
-            prognNode.addBody(visit(stmt));
-        }
-        return prognNode;
-    }
-
-    @Override
-    public ASTNode visitReturn_statement(LispParser.Return_statementContext ctx) {
-        String blockName = ctx.IDENTIFIER().getText();
-        ASTNode returnValue = visit(ctx.expression());
-        return new ReturnStatementNode(blockName, returnValue);
-    }
 
     @Override
     public ASTNode visitCondition(LispParser.ConditionContext ctx) {
